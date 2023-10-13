@@ -308,7 +308,7 @@ if map_data:
         longitude = clicked_point.get('lng')
         st.write(f"Clicked coordinates: {latitude}, {longitude}")
         
-        info = f"\n Lat,lon: {latitude}, {longitude}"
+        info = f"\n Lat,lon: {round(float(latitude),3)}, {round(float(longitude),3)} \n Opt T C3: {temp_c3} | Var T C3: {var_c3} \n Opt T C4: {temp_c4} Var T C4: {var_c4} \n Year: {aggregation}"
         
         # Add a new marker
         with col1:
