@@ -235,7 +235,10 @@ def plot_climate_and_growth_potential(lat, lon,
         
         # Fetch climate data
         print(start_date,end_date)
-        climate_data = fetch_climate_data(lat, lon, start_date, end_date)
+        try:
+            climate_data = fetch_climate_data_regrow(lat, lon, start_date, end_date)
+        except:
+            climate_data = fetch_climate_data(lat, lon, start_date, end_date)
         
         # If aggregation is 'average', average the temperatures for each month across all years
         if aggregation == 'average':
