@@ -1,0 +1,11 @@
+streamlit
+pydeck
+matplotlib
+requests
+pandas
+folium
+<<<<<<< HEAD
+streamlit_folium
+=======
+streamlit_folium
+>>>>>>> 1dec7e33f1db7d2a667fcc2b0051cafc115c1bd7
