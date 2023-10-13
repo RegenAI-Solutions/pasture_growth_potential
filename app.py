@@ -14,8 +14,8 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-# import your plot_climate_and_growth_potential function
-def fetch_climate_data(lat, lon, start_date, end_date, monthly=True, plot=False):
+# import plot_climate_and_growth_potential function
+def fetch_climate_data_regrow(lat, lon, start_date, end_date, monthly=True, plot=False):
     '''
     Fetching climate data from NasaPower through Regrow's climate service endpoint
     NasaPower variable cheatsheet: https://gist.github.com/abelcallejo/d68e70f43ffa1c8c9f6b5e93010704b8
@@ -78,6 +78,70 @@ def fetch_climate_data(lat, lon, start_date, end_date, monthly=True, plot=False)
         print(f"Failed to retrieve data. HTTP Status Code: {response.status_code}")
         return None
 
+
+## To deploy need to use public endpoint from Nasa power
+def fetch_climate_data(lat, lon, start_date, end_date, monthly=True, plot=False):
+    '''
+    Fetching climate data from NasaPower
+    NasaPower variable cheatsheet: https://gist.github.com/abelcallejo/d68e70f43ffa1c8c9f6b5e93010704b8
+    T2M	Temperature at 2 Meters	The average air (dry bulb) temperature at 2 meters above the surface of the earth.
+    '''
+    
+     # Set time period
+    if isinstance(start_date,datetime):
+        start_date = start_date.strftime('%Y-%m-%d')
+    if isinstance(end_date,datetime): 
+        end_date = end_date.strftime('%Y-%m-%d')
+        
+    # Construct the API URL
+    url = f"https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,T2MDEW,T2MWET,TS,T2M_RANGE,T2M_MAX,T2M_MIN&community=RE"
+
+    params = {
+        'latitude': lat,
+        'longitude': lon,
+        'start': start_date.replace("-",""),
+        'end': end_date.replace("-",""),
+        'format': 'JSON',
+    }
+
+    # Make the API request
+    response = requests.get(url, params=params)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the JSON data
+        json_data = response.json()
+        
+        # Extract relevant data
+        t2m_data = json_data['properties']['parameter']['T2M']
+        t2m_max_data = json_data['properties']['parameter']['T2M_MAX']
+        t2m_min_data = json_data['properties']['parameter']['T2M_MIN']
+
+        # Create DataFrame
+        df = pd.DataFrame({
+            'date': list(t2m_data.keys()),
+            'tavg': list(t2m_data.values()),
+            'tmax': list(t2m_max_data.values()),
+            'tmin': list(t2m_min_data.values())
+        })
+
+        # Convert 'date' column to datetime type and set it as the index
+        df['date'] = pd.to_datetime(df['date'])
+        df.set_index('date', inplace=True)
+        
+        if monthly:
+            # Resample to monthly frequency, taking the mean of each month
+            df = df.resample('M').mean()
+            df['year_month'] = df.index.to_period('M')
+            
+        if plot:
+            # Plot line chart including average, minimum and maximum temperature
+            df.plot(y=['tavg', 'tmin', 'tmax'])
+            plt.show()
+        return df
+    else:
+        print(f"Failed to retrieve data. HTTP Status Code: {response.status_code}")
+        return None
 
 # import math
 def calculate_growth_potential(temp, optimum_growth_temp, temp_variance, species):
