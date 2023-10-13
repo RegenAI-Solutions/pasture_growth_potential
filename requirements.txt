@@ -1,12 +1,7 @@
 streamlit
 pydeck
 matplotlib
-datetime
 requests
 pandas
-math
 folium
-streamlit_folium 
-PIL 
-io
-base64
+streamlit_folium
