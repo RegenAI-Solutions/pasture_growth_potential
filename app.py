@@ -202,6 +202,7 @@ def plot_growth_potential(df, optimum_growth_temp_c3, temp_variance_c3,
     plt.legend()
     plt.xticks(rotation=45)
     plt.grid(True)
+    plt.tight_layout()
     # plt.show()
     plt.close()
     return fig
