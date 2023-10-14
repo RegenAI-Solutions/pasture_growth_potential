@@ -196,6 +196,7 @@ def plot_growth_potential(df, optimum_growth_temp_c3, temp_variance_c3,
     fig = plt.figure(figsize=figsize)
     plt.plot(df['year_month'].astype(str), df['GP_C3'], label='GP for C3 Grasses')
     plt.plot(df['year_month'].astype(str), df['GP_C4'], label='GP for C4 Grasses')
+    plt.ylim(0, 1)
     plt.xlabel('Month')
     plt.ylabel('Growth Potential (GP)')
     plt.title(title)
