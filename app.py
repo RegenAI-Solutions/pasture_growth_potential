@@ -662,7 +662,7 @@ col1, col2 = st.columns(2)
 
 # Create Folium map in the first column
 with col1:
-    
+    st.write(f"Click any where on the map to plot growth")
     # Create Folium map
     m = folium.Map(location=[50, -100], zoom_start=3,  width=400, height=600)
     
