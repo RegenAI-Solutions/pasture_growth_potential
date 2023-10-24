@@ -387,7 +387,7 @@ def dormancy_regrowth_logic(
                 if is_dormant and c_accumulation > 10: # 10gC/m2 100kg/ha 
                     c_accumulation -= max_n_month * c_n_ratio * TDD_max_reset_frac
             else:
-                tdd_accumulation += max(0, avg_temperature - temperature ) # should it be min_temp or T_base??
+                tdd_accumulation += max(0, avg_temperature - T_base, avg_temperature - temperature) # should it be min_temp or T_base??
                 c_accumulation += c_accumulation_daily
             
             # Check if TDD accumulation exceeds TDD_max
@@ -416,6 +416,7 @@ def dormancy_regrowth_logic(
 # Visualization function to plot important variables
 def visualize_dormancy_regrowth_logic(min_air_temperature,
                                       avg_air_temperature,
+                                      T_critical,
                                       tdd_accumulation,
                                       is_dormant,
                                       chilling_hours,
@@ -432,7 +433,7 @@ def visualize_dormancy_regrowth_logic(min_air_temperature,
     i=0
     axs[i].plot(min_air_temperature, label='Min Air Temperature (C)', color='blue')
     axs[i].plot(avg_air_temperature, label='Avg Air Temperature (C)', color='orange')
-    axs[i].axhline(y=-5, color='r', linestyle='--', label='T_critical (-5 C)')
+    axs[i].axhline(y=T_critical, color='r', linestyle='--', label='T_critical (C)')
     axs[i].set_title('Min and Avg Air Temperature')
     axs[i].set_xlabel('Days')
     axs[i].set_ylabel('Temperature (C)')
@@ -609,25 +610,43 @@ aggregation = st.sidebar.number_input('Year:', value=2020)
 
 # General parameters
 species = st.sidebar.selectbox("Species:", options=["c3", "c4"])
-max_n_month = st.sidebar.slider("Max monthly N uptake(g/m2/month):", 0.0, 10.0, 3.5)
-c_n_ratio = st.sidebar.slider("C/N Ratio:", 0.0, 50.0, 20.0)
+if species == "c3":
+    
+    max_n_month = st.sidebar.slider("Max monthly N uptake(g/m2/month):", 0.0, 10.0, 3.5)
+    c_n_ratio = st.sidebar.slider("C/N Ratio:", 0.0, 150.0, 20.0)
+    # Temperature thresholds
+    temp = st.sidebar.slider('Optimum Growth Temperature (°C):', 0, 50, 20)
+    var = st.sidebar.slider('Temperature Variance:', 0, 30, 10)
+    T_critical = st.sidebar.slider("Critical Temperature (°C):", -10.0, 10.0, -5.0)
+    T_base = st.sidebar.slider("Base Temperature (°C):", -10.0, 10.0, 0.0)
+    TDD_max = st.sidebar.slider("TDD Max:", 0.0, 5000.0, 2000.0)
+    tdd_min = st.sidebar.slider("TDD threshold for biomass accumulation:", 0.0, 5000.0, 10.0)
+    # Growth potential
+    gp_threshold = st.sidebar.slider("Growth Potential Threshold:", 0.0, 1.0, 0.1)
+    regrowth_reset_frac = st.sidebar.slider("Regrowth Reset Fraction:", 0.0, 1.0, 0.1)
+    TDD_max_reset_frac = st.sidebar.slider("TDD Max Reset Fraction:", 0.0, 1.0, 0.1)
 
-# Temperature thresholds
-temp = st.sidebar.slider('Optimum Growth Temperature (°C):', 0, 50, 20)
-var = st.sidebar.slider('Temperature Variance:', 0, 30, 10)
-T_critical = st.sidebar.slider("Critical Temperature (°C):", -10.0, 10.0, -5.0)
-T_base = st.sidebar.slider("Base Temperature (°C):", -10.0, 10.0, 0.0)
-TDD_max = st.sidebar.slider("TDD Max:", 0.0, 5000.0, 2000.0)
-tdd_min = st.sidebar.slider("TDD threshold for biomass accumulation:", 0.0, 5000.0, 10.0)
+    # Chilling hours
+    min_chilling_hours = st.sidebar.slider("Min Chilling Hours:", 0, 500, 100)
+    chilling_temp_range = st.sidebar.slider("Chilling Temperature Range (0 - x):", 0, 10, (0, 7))
+elif species == "c4":
+    max_n_month = st.sidebar.slider("Max monthly N uptake(g/m2/month):", 0.0, 10.0, 4.0)
+    c_n_ratio = st.sidebar.slider("C/N Ratio:", 0.0, 150.0, 20.0)
+    # Temperature thresholds
+    temp = st.sidebar.slider('Optimum Growth Temperature (°C):', 0, 50, 31)
+    var = st.sidebar.slider('Temperature Variance:', 0, 30, 12)
+    T_critical = st.sidebar.slider("Critical Temperature (°C):", -10.0, 10.0, 0.0)
+    T_base = st.sidebar.slider("Base Temperature (°C):", -10.0, 20.0, 10.0)
+    TDD_max = st.sidebar.slider("TDD Max:", 0.0, 5000.0, 2000.0)
+    tdd_min = st.sidebar.slider("TDD threshold for biomass accumulation:", 0.0, 5000.0, 10.0)
+    # Growth potential
+    gp_threshold = st.sidebar.slider("Growth Potential Threshold:", 0.0, 1.0, 0.1)
+    regrowth_reset_frac = st.sidebar.slider("Regrowth Reset Fraction:", 0.0, 1.0, 0.1)
+    TDD_max_reset_frac = st.sidebar.slider("TDD Max Reset Fraction:", 0.0, 1.0, 0.1)
 
-# Growth potential
-gp_threshold = st.sidebar.slider("Growth Potential Threshold:", 0.0, 1.0, 0.1)
-regrowth_reset_frac = st.sidebar.slider("Regrowth Reset Fraction:", 0.0, 1.0, 0.1)
-TDD_max_reset_frac = st.sidebar.slider("TDD Max Reset Fraction:", 0.0, 1.0, 0.1)
-
-# Chilling hours
-min_chilling_hours = st.sidebar.slider("Min Chilling Hours:", 0, 500, 100)
-chilling_temp_range = st.sidebar.slider("Chilling Temperature Range (0 - x):", 0, 10, (0, 7))
+    # Chilling hours
+    min_chilling_hours = st.sidebar.slider("Min Chilling Hours:", 0, 500, 100)
+    chilling_temp_range = st.sidebar.slider("Chilling Temperature Range (0 - x):", 0, 10, (0, 7))
 
 # Consecutive days
 consecutive_freezing_days_threshold = st.sidebar.slider("Consecutive Freezing Days Threshold:", 0, 30, 7)
@@ -722,6 +741,7 @@ if map_data:
 
         fig = visualize_dormancy_regrowth_logic(weather_df['tmin'],
                                             weather_df['tavg'],
+                                            T_critical,
                                             tdd_accumulation_result_multiyear, is_dormant_array,
                                             chilling_hours_array,
                                             consecutive_freezing_days_array,
@@ -739,7 +759,7 @@ if map_data:
             
             
 # Display recorded plots
-for i, (fig, coord) in enumerate(zip(st.session_state['plots'], st.session_state['coords'])):
+for i, (fig, coord) in enumerate(zip(reversed(st.session_state['plots']), reversed(st.session_state['coords']))):
     col1, col2, col3 = st.columns([1, 6, 1])
     with col1:
         st.write(f"Lat/Lon: {coord[0]}/{coord[1]}")
